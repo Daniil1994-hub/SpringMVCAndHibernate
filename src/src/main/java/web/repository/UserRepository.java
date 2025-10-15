@@ -1,19 +1,29 @@
 package web.repository;
 
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
-import jakarta.persistence.TypedQuery;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import javax.persistence.TypedQuery;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 import web.model.User;
 
 import java.util.List;
 
 @Repository
+@Transactional
 public class UserRepository {
 
     @PersistenceContext
     private EntityManager entityManager;
 
+    // Добавьте конструктор по умолчанию
+    public UserRepository() {
+    }
+
+    // Или используйте конструктор с EntityManager
+    public UserRepository(EntityManager entityManager) {
+        this.entityManager = entityManager;
+    }
     public List<User> findAll() {
         TypedQuery<User> query = entityManager.createQuery("SELECT u FROM User u", User.class);
         return query.getResultList();
