@@ -1,8 +1,11 @@
 package web.config;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.PropertySource;
+import org.springframework.core.env.Environment;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
 import org.springframework.orm.jpa.JpaTransactionManager;
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
@@ -21,11 +24,13 @@ import javax.sql.DataSource;
 import java.util.Properties;
 
 @Configuration
+@PropertySource("classpath:db.properties")
 @EnableWebMvc
 @EnableTransactionManagement
 @ComponentScan("web")
 public class WebConfig implements WebMvcConfigurer {
-
+    @Autowired
+    private Environment env;
     // Thymeleaf конфигурация
     @Bean
     public SpringResourceTemplateResolver templateResolver() {
@@ -33,7 +38,7 @@ public class WebConfig implements WebMvcConfigurer {
         templateResolver.setPrefix("/WEB-INF/pages/");
         templateResolver.setSuffix(".html");
         templateResolver.setTemplateMode("HTML");
-        templateResolver.setCharacterEncoding("UTF-8");
+        templateResolver.setCharacterEncoding(env.getProperty("hibernate.connection.charSet"));
         templateResolver.setCacheable(false);
         return templateResolver;
     }
@@ -50,17 +55,17 @@ public class WebConfig implements WebMvcConfigurer {
     public void configureViewResolvers(ViewResolverRegistry registry) {
         ThymeleafViewResolver resolver = new ThymeleafViewResolver();
         resolver.setTemplateEngine(templateEngine());
-        resolver.setCharacterEncoding("UTF-8");
+        resolver.setCharacterEncoding(env.getProperty("hibernate.connection.charSet"));
         registry.viewResolver(resolver);
     }
 
     @Bean
     public DataSource dataSource() {
         DriverManagerDataSource dataSource = new DriverManagerDataSource();
-        dataSource.setDriverClassName("com.mysql.cj.jdbc.Driver");
-        dataSource.setUrl("jdbc:mysql://localhost:3306/game?useSSL=false&serverTimezone=UTC&characterEncoding=UTF-8");
-        dataSource.setUsername("root");
-        dataSource.setPassword("test");
+        dataSource.setDriverClassName(env.getProperty("db.driver"));
+        dataSource.setUrl(env.getProperty("db.url"));
+        dataSource.setUsername(env.getProperty("db.username"));
+        dataSource.setPassword(env.getProperty("db.password"));
         return dataSource;
     }
 
@@ -76,11 +81,11 @@ public class WebConfig implements WebMvcConfigurer {
 
     private Properties hibernateProperties() {
         Properties properties = new Properties();
-        properties.put("hibernate.dialect", "org.hibernate.dialect.MySQL8Dialect");
-        properties.put("hibernate.show_sql", "true");
-        properties.put("hibernate.format_sql", "true");
-        properties.put("hibernate.hbm2ddl.auto", "update");
-        properties.put("hibernate.connection.charSet", "UTF-8");
+        properties.put("hibernate.dialect", env.getProperty("hibernate.dialect"));
+        properties.put("hibernate.show_sql", env.getProperty("hibernate.show_sql"));
+        properties.put("hibernate.format_sql", env.getProperty("hibernate.format_sql"));
+        properties.put("hibernate.hbm2ddl.auto", env.getProperty("hibernate.hbm2ddl.auto"));
+        properties.put("hibernate.connection.charSet", env.getProperty("hibernate.connection.charSet"));
         return properties;
     }
 
