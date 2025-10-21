@@ -26,32 +26,24 @@ public class UserDaoImp implements UserDao{
     }
 
     public User findById(Long id) {
-        try {
-            return entityManager.find(User.class, id);
-        } catch (EntityNotFoundException e) {
-            throw e;
+        User user = entityManager.find(User.class, id);
+        if (user == null) {
+            throw new EntityNotFoundException("User with id " + id + " not found");
         }
+        return user;
     }
 
     public User save(User user) {
-        try {
-            if (user.getId() == null) {
-                entityManager.persist(user);
-                return user;
-            } else {
-                return entityManager.merge(user);
-            }
-        } catch (EntityNotFoundException e) {
-            throw e;
+        if (user.getId() == null) {
+            entityManager.persist(user);
+            return user;
+        } else {
+            return entityManager.merge(user);
         }
     }
 
     public void delete(User user) {
-        try {
-            entityManager.remove(entityManager.contains(user) ? user : entityManager.merge(user));
-        } catch (EntityNotFoundException e) {
-            throw e;
-        }
+        entityManager.remove(entityManager.contains(user) ? user : entityManager.merge(user));
     }
 
     public void deleteById(Long id) {

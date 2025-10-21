@@ -6,6 +6,8 @@
 <body>
 <h1>Users Management</h1>
 
+<div th:if="${errorMessage}" class="alert alert-error" th:text="${errorMessage}"></div>
+
 <!-- Форма добавления пользователя -->
 <h2>Add New User</h2>
 <form action="/untitled5/add" method="post">
@@ -36,8 +38,13 @@
         <td th:text="${user.email}">Email</td>
         <td>
             <a th:href="@{/edit(id=${user.id})}">Edit</a> |
-            <a th:href="@{/delete(id=${user.id})}"
-               onclick="return confirm('Are you sure you want to delete this user?')">Delete</a>
+            <form class="delete-form" th:action="@{/delete}" method="post">
+                <input type="hidden" name="id" th:value="${user.id}">
+                <button type="submit" class="delete-btn"
+                        onclick="return confirm('Are you sure you want to delete this user?')">
+                    Delete
+                </button>
+            </form>
         </td>
     </tr>
     </tbody>

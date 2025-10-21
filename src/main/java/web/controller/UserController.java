@@ -3,21 +3,27 @@ package web.controller;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import web.model.User;
-import web.service.UserServiceImpl;
+import web.service.UserService;
 
 import javax.persistence.EntityNotFoundException;
+import javax.validation.Valid;
 import java.util.List;
 
 @Controller
 public class UserController {
 
+    private final UserService userServiceImpl;
+
     @Autowired
-    private UserServiceImpl userServiceImpl;
+    public UserController(UserService userService) {
+        this.userServiceImpl = userService;
+    }
 
     @GetMapping("/")
     public String showAllUsers(Model model) {
@@ -27,16 +33,15 @@ public class UserController {
     }
 
     @PostMapping("/add")
-    public String addUser(@RequestParam String name,
-                          @RequestParam String lastName,
-                          @RequestParam String email,
-                          Model model) {
-        try {
-            User user = new User(name, lastName, email);
-            userServiceImpl.saveUser(user);
-        } catch (EntityNotFoundException e) {
-            model.addAttribute("errorMessage", e.getMessage());
+    public String addUser(@Valid @ModelAttribute User user,
+                          BindingResult bindingResult, Model model) {
+        if (bindingResult.hasErrors()) {
+            // Возвращаемся на ту же страницу с сообщениями об ошибках
+            model.addAttribute("users", userServiceImpl.getAllUsers());
+            model.addAttribute("errorMessage", "Ошибка валиадции");
+            return "users"; // остаемся на той же странице
         }
+        userServiceImpl.saveUser(user);
         return "redirect:/";
     }
 
@@ -49,13 +54,22 @@ public class UserController {
                 System.out.println("Editing user: " + user);
             }
         } catch (EntityNotFoundException e) {
+            model.addAttribute("users", userServiceImpl.getAllUsers());
             model.addAttribute("errorMessage", e.getMessage());
         }
-        return "edit-user"; // отдельная страница для редактирования
+        return "edit-user";
     }
 
     @PostMapping("/update")
-    public String updateUser(@ModelAttribute User inUser, Model model) {
+    public String updateUser(@Valid @ModelAttribute User inUser,
+                             BindingResult bindingResult, Model model) {
+        // Проверяем ошибки валидации
+        if (bindingResult.hasErrors()) {
+            // Возвращаемся на ту же страницу с сообщениями об ошибках
+            model.addAttribute("users", userServiceImpl.getAllUsers());
+            model.addAttribute("errorMessage", "Ошибка валиадции");
+            return "users"; // остаемся на той же странице
+        }
         try {
             User user = userServiceImpl.getUserById(inUser.getId());
             if (user != null) {
@@ -65,7 +79,9 @@ public class UserController {
                 userServiceImpl.saveUser(user);
             }
         } catch (EntityNotFoundException e) {
+            model.addAttribute("users", userServiceImpl.getAllUsers());
             model.addAttribute("errorMessage", e.getMessage());
+            return "users";
         }
         return "redirect:/";
     }
@@ -75,7 +91,9 @@ public class UserController {
         try {
             userServiceImpl.deleteUser(id);
         } catch (EntityNotFoundException e) {
+            model.addAttribute("users", userServiceImpl.getAllUsers());
             model.addAttribute("errorMessage", e.getMessage());
+            return "users";
         }
         return "redirect:/";
     }
